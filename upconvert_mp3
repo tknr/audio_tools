@@ -1,0 +1,74 @@
+#!/bin/bash
+export IFS=$'\n'
+argv=("$@")
+CMDNAME=`basename $0`
+
+## https://qiita.com/hit/items/e95298f689a1ee70ae4a                                                                                                                                                               
+_pcnt=`pgrep -fo ${CMDNAME} | wc -l`               
+if [ ${_pcnt} -gt 1 ]; then                        
+	echo "This script has been running now. proc : ${_pcnt}"
+	exit 1                                           
+fi
+
+## configuration
+TMP_DIR=/tmp
+THRESHOLD_BITRATE=160
+TARGET_BITRATE=320.01
+TARGET_SAMPLING_RATE=48000
+TARGET_DIR=`pwd`
+
+source ~/.config/upconvert_mp3/config
+
+##
+usage_exit() {
+        echo "Usage : ${CMDNAME} [-b bitrate] [-t threshould_bitrate ] [-r sample_rate] [-d dir]" 1>&2
+        exit 1
+}
+
+if [ $# -eq 0 ]; then
+        usage_exit
+fi
+
+## http://takuya-1st.hatenablog.jp/entry/2015/12/24/234238
+while getopts "b:t:r:d:h" OPT ; do
+	case $OPT in
+		b)
+			TARGET_BITRATE=$OPTARG
+		;;
+		t)
+			THRESHOLD_BITRATE=$OPTARG
+		;;
+		r)
+			TARGET_SAMPLING_RATE=$OPTARG
+		;;
+		d)
+			TARGET_DIR=$OPTARG
+		;;
+		h)
+			usage_exit
+		;;
+		\? )
+			usage_exit
+		;;
+	esac
+done
+shift $(($OPTIND - 1))
+
+
+for FILENAME in `find "${TARGET_DIR}" -name "*.mp3" | sort`
+do
+	BITRATE=`ffprobe -hide_banner -show_format -pretty "${FILENAME}" 2>&1 | grep -Po '^bit_rate=([0-9]*)' | grep -Po '[0-9]*'` || continue
+	expr $BITRATE + 1 || continue
+	echo ''$FILENAME' : '$BITRATE' k'
+	if [ $(( BITRATE )) -lt $(( THRESHOLD_BITRATE )) ]  ; then
+		echo "under threshold bitrate ${THRESHOLD_BITRATE} : ${BITRATE} . upconverting..."
+		serial=`uuidgen` || continue
+
+		nice -n 19 sox -V3 --buffer 65536 --guard --show-progress --multi-threaded --norm "${FILENAME}" -C ${TARGET_BITRATE} -r ${TARGET_SAMPLING_RATE} ${TMP_DIR}/${serial}.mp3 dither -S || continue
+		rm "${FILENAME}" || continue
+		mv ${TMP_DIR}/${serial}.mp3 "${FILENAME}" || continue
+
+	fi
+done
+rm -f ${TMP_DIR}/*.mp3
+

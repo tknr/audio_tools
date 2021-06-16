@@ -1,0 +1,17 @@
+#/bin/bash -x
+export IFS=$'\n'
+CURRENT_DIR=`pwd`
+for dir in `find . -type d`;do
+        echo ${dir}
+        cd "${dir}"
+                for mp3 in `ls -1 --color=never *.mp3`;do
+                        echo ${mp3}
+                        COVER=`ls -1 --color=never *.jpg *.JPG *.jpeg *.JPEG *.png *.PNG | head -n 1`
+			if [ -z "$COVER" ]; then
+				continue;
+			fi
+                        eyeD3 --add-image="${COVER}":FRONT_COVER "${mp3}"
+                done
+        cd "${CURRENT_DIR}"
+done
+

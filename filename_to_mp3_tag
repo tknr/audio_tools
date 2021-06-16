@@ -1,0 +1,42 @@
+#/bin/bash -x
+export IFS=$'\n'
+CURRENT_DIR=`pwd`
+for dir in `find . -type d`;do
+        echo ${dir}
+        cd "${dir}"
+                for mp3 in `ls -1 --color=never *.mp3`;do
+                        echo ${mp3}
+			IFS=, ARR=(${mp3// - /,})
+
+			echo ${#ARR[@]}
+
+			if [ ${#ARR[@]} -eq 3 ] ;then
+
+				TRACKNO=${ARR[0]}
+				ARTIST=${ARR[1]} || continue
+				TRACKNAME=${ARR[2]} || continue
+				TRACKNAME=${TRACKNAME/.mp3/}
+
+				echo 'TRACKNO:'${TRACKNO}' ARTIST:'${ARTIST}' TRACKNAME:'${TRACKNAME}
+
+				eyeD3 --track "${TRACKNO}" --artist "${ARTIST}" --title "${TRACKNAME}" ${mp3} || continue
+
+			fi
+
+                        if [ ${#ARR[@]} -eq 2 ] ;then
+                        
+                                ARTIST=${ARR[0]} || continue
+                                TRACKNAME=${ARR[1]} || continue
+                                TRACKNAME=${TRACKNAME/.mp3/}
+                        
+                                echo 'ARTIST:'${ARTIST}' TRACKNAME:'${TRACKNAME}
+
+                               eyeD3 --artist "${ARTIST}" --title "${TRACKNAME}" ${mp3} || continue
+
+                        fi
+
+			IFS=$'\n'
+                done
+        cd "${CURRENT_DIR}"
+done
+

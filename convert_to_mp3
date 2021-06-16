@@ -1,0 +1,127 @@
+#!/bin/bash
+export IFS=$'\n'
+DATE=`date +%Y_%m_%d`
+argv=("$@")
+CMDNAME=`basename $0`
+
+if [ $# -eq 0 ]; then
+    echo "Usage : ${CMDNAME} [dirname]"
+    exit 1
+fi
+
+##
+NICE=19
+BITRATE=320
+FREQUENCY=48000
+
+## https://qiita.com/hit/items/e95298f689a1ee70ae4a
+_pcnt=`pgrep -fo ${CMDNAME} | wc -l`
+if [ ${_pcnt} -gt 1 ]; then
+	echo "This script has been running now. proc : ${_pcnt}"
+  exit 1
+fi
+
+THREADS=$(( (`cat /proc/cpuinfo | grep processor | wc -l` +1) / 4))
+TMP_DIR=/tmp
+
+for ARG_DIR in ${argv}
+do
+
+	TARGET_DIR=`readlink -f ${ARG_DIR}`
+
+	## wav2mp3
+	for FILENAME in `find "${TARGET_DIR}" -iname "*.wav" | sort`
+	do
+		nice -n ${NICE} lame -h -q 0 --preset insane --highpass -1 --lowpass -1 "${FILENAME}" "${FILENAME%%.wav}.mp3" || continue
+		rm -f "${FILENAME}" || continue
+	done
+
+	## ogg2mp3
+	for FILENAME in `find "${TARGET_DIR}" -iname "*.ogg" | sort`
+	do
+		nice -n ${NICE} sox --multi-threaded --show-progress --guard "${FILENAME}" -C ${BITRATE}.01 -r ${FREQUENCY} "${FILENAME%%.ogg}.mp3" dither -S || continue
+		rm -f "${FILENAME}" || continue
+	done
+
+	## m4a2mp3
+	for FILENAME in `find "${TARGET_DIR}" -iname "*.m4a" | sort`
+	do
+		nice -n ${NICE} ffmpeg -hide_banner -y -i "${FILENAME}" -threads ${THREADS} -ar ${FREQUENCY} -ab ${BITRATE}k  -map_metadata 0 -id3v2_version 3 "${FILENAME%%.m4a}.mp3" || continue
+		rm -f "${FILENAME}" || continue
+	done
+
+	## flac2mp3
+	for FILENAME in `find "${TARGET_DIR}" -iname "*.flac" | sort`
+	do
+		nice -n ${NICE} sox --multi-threaded --show-progress --guard "${FILENAME}" -C ${BITRATE}.01 -r ${FREQUENCY} "${FILENAME%%.flac}.mp3" dither -S || continue
+		rm -f "${FILENAME}"
+	done
+
+	## alac2mp3
+	for FILENAME in `find "${TARGET_DIR}" -iname "*.alac" | sort`
+	do
+		nice -n ${NICE} sox --multi-threaded --show-progress --guard "${FILENAME}" -C ${BITRATE}.01 -r ${FREQUENCY} "${FILENAME%%.alac}.mp3" dither -S || continue
+		rm -f "${FILENAME}" || continue
+	done
+
+	## dsf2mp3
+	for FILENAME in `find "${TARGET_DIR}" -iname "*.dsf" | sort`
+	do
+		nice -n ${NICE} ffmpeg -hide_banner -y -i "${FILENAME}" -threads ${THREADS} -ar ${FREQUENCY} -ab ${BITRATE}k  -map_metadata 0 -id3v2_version 3 "${FILENAME%%.dsf}.mp3" || continue
+		rm -f "${FILENAME}" || continue
+	done
+
+
+	## aif2mp3
+	for FILENAME in `find "${TARGET_DIR}" -iname "*.aif" | sort`
+	do
+		nice -n ${NICE} lame -h -q 0 --preset insane --highpass -1 --lowpass -1 "${FILENAME}" "${FILENAME%%.aif}.mp3" || continue
+		rm -f "${FILENAME}" || continue
+	done
+
+	## aiff2mp3
+	for FILENAME in `find "${TARGET_DIR}" -iname "*.aiff" | sort`
+	do
+		nice -n ${NICE} lame -h -q 0 --preset insane --highpass -1 --lowpass -1 "${FILENAME}" "${FILENAME%%.aiff}.mp3" || continue
+		rm -f "${FILENAME}" || continue
+	done
+
+	## mpc2mp3
+	for FILENAME in `find "${TARGET_DIR}" -iname "*.mpc" | sort`
+	do
+	    i=${FILENAME%%.mpc}
+	    serial=`uuidgen` || continue
+	    nice -n ${NICE} mpcdec "${FILENAME}" "${TMP_DIR}/${serial}.wav" || continue
+	    nice -n ${NICE} lame -h -q 0 --preset insane --highpass -1 --lowpass -1 "${TMP_DIR}/${serial}.wav" "${i}.mp3" || continue
+	    rm -f "${TMP_DIR}/${serial}.wav" || continue
+	    rm -f "${FILENAME}" || continue
+	done
+
+        ## opus2mp3
+        for FILENAME in `find "${TARGET_DIR}" -iname "*.opus" | sort`
+        do
+                nice -n ${NICE} ffmpeg -hide_banner -y -i "${FILENAME}" -threads ${THREADS} -ar ${FREQUENCY} -ab ${BITRATE}k  -map_metadata 0 -id3v2_version 3 "${FILENAME%%.opus}.mp3" || continue
+                rm -f "${FILENAME}" || continue
+        done
+
+	## ape2mp3
+	for FILENAME in `find "${TARGET_DIR}" -iname "*.ape" | sort`
+	do
+		nice -n ${NICE} ffmpeg -hide_banner -y -i "${FILENAME}" -threads ${THREADS} -ar ${FREQUENCY} -ab ${BITRATE}k  -map_metadata 0 -id3v2_version 3 "${FILENAME%%.ape}.mp3" || continue
+		rm -f "${FILENAME}" || continue
+	done
+
+        ## wv2mp3
+        for FILENAME in `find "${TARGET_DIR}" -iname "*.wv" | sort`
+        do
+ 		nice -n ${NICE} ffmpeg -hide_banner -y -i "${FILENAME}" -threads ${THREADS} -ar ${FREQUENCY} -ab ${BITRATE}k  -map_metadata 0 -id3v2_version 3 "${FILENAME%%.wv}.mp3" || continue
+                rm -f "${FILENAME}" || continue
+        done
+
+done
+
+## delete txt
+find "${TARGET_DIR}" -name *.txt -exec rm -f {} \;
+find "${TARGET_DIR}" -name *.url -exec rm -f {} \;
+find "${TARGET_DIR}" -name "Thumbs.db" -exec rm -f {} \;
+find "${TARGET_DIR}" -name ".DS_store" -exec rm -Rf {} \;
