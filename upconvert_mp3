@@ -55,7 +55,7 @@ shift $(($OPTIND - 1))
 
 for FILENAME in `find "${TARGET_DIR}" -name "*.mp3" | sort`
 do
-	BITRATE=`ffmpeg -hide_banner -i "${FILENAME}" 2>&1 | grep Audio | cut -d "," -f 5 | tr -d " kb/s"` || continue
+	BITRATE=`ffprobe -hide_banner -show_format -pretty "${FILENAME}" 2>&1 | grep -Po '^bit_rate=([0-9]*)' | grep -Po '[0-9]*'` || continue
 	expr $BITRATE + 1 || continue
 	echo ''$FILENAME' : '$BITRATE' k'
 	if [ $(( BITRATE )) -lt $(( THRESHOLD_BITRATE )) ]  ; then
