@@ -17,6 +17,8 @@ TARGET_BITRATE=320.01
 TARGET_SAMPLING_RATE=48000
 TARGET_DIR=`pwd`
 
+source ~/.config/upconvert_mp3/config
+
 ##
 usage_exit() {
         echo "Usage : ${CMDNAME} [-b bitrate] [-t threshould_bitrate ] [-r sample_rate] [-d dir]" 1>&2
