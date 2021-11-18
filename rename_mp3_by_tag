@@ -1,0 +1,18 @@
+#/bin/bash -x
+export IFS=$'\n'
+CURRENT_DIR=`pwd`
+FORMAT_STRING='%02n - %a - %t'
+for dir in `find . -type d`;do
+        echo ${dir}
+        cd "${dir}"
+                for mp3 in `ls -1 --color=never *.mp3`;do
+                        echo "filename:"${mp3}
+			chk_tag=`mp3info -p "%t" ${mp3}` || continue
+			if [ -z ${chk_tag} ] ; then continue ; fi
+			dst_filename=`mp3info -p "${FORMAT_STRING}" ${mp3}` || continue
+			echo "dst:"${dst_filename}
+			mv -v ${mp3} "${dst_filename}.mp3"
+                done
+        cd "${CURRENT_DIR}"
+done
+
