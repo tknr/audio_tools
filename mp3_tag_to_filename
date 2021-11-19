@@ -1,7 +1,30 @@
 #/bin/bash -x
 export IFS=$'\n'
+CMDNAME=`basename $0`
 CURRENT_DIR=`pwd`
 FORMAT_STRING='%02n - %a - %t'
+
+usage_exit() {
+        echo "Usage : ${CMDNAME} [-p format string]" 1>&2
+        exit 1
+}
+
+while getopts "p:h" OPT ; do
+        case $OPT in
+                p)
+                        FORMAT_STRING=$OPTARG
+                ;;
+                h)
+                        usage_exit
+                ;;
+                \? )
+                        usage_exit
+                ;;
+        esac
+done
+shift $(($OPTIND - 1))
+
+
 for dir in `find . -type d`;do
         echo ${dir}
         cd "${dir}"
