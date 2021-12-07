@@ -111,6 +111,13 @@ do
 		rm -f "${FILENAME}" || continue
 	done
 
+        ## wv2mp3
+        for FILENAME in `find "${TARGET_DIR}" -iname "*.wv" | sort`
+        do
+ 		nice -n ${NICE} ffmpeg -hide_banner -y -i "${FILENAME}" -threads ${THREADS} -ar ${FREQUENCY} -ab ${BITRATE}k  -map_metadata 0 -id3v2_version 3 "${FILENAME%%.wv}.mp3" || continue
+                rm -f "${FILENAME}" || continue
+        done
+
 done
 
 ## delete txt
