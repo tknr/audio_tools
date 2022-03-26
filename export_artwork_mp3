@@ -6,7 +6,7 @@ for dir in `find . -type d`;do
         cd "${dir}"
                 for mp3 in `ls -1 --color=never *.mp3`;do
                         echo ${mp3}
-			ffmpeg -i ${mp3} -an -vcodec copy ${mp3}.jpg
+			ffmpeg -y -i ${mp3} -an -vcodec copy ${mp3}.jpg
                 done
         cd "${CURRENT_DIR}"
 done
