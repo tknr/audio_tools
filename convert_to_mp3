@@ -118,6 +118,13 @@ do
                 rm -f "${FILENAME}" || continue
         done
 
+        ## wma2mp3
+        for FILENAME in `find "${TARGET_DIR}" -iname "*.wma" | sort`
+        do
+                nice -n ${NICE} ffmpeg -hide_banner -y -i "${FILENAME}" -threads ${THREADS} -ar ${FREQUENCY} -ab ${BITRATE}k  -map_metadata 0 -id3v2_version 3 "${FILENAME%%.wma}.mp3" || continue
+                rm -f "${FILENAME}" || continue
+        done
+
 done
 
 ## delete txt
